@@ -3,8 +3,6 @@ import glob
 import PyPDF2
 import textract
 
-import matplotlib.pyplot as plt
-
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
