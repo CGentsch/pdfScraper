@@ -1,51 +1,65 @@
+import sys
 import re
 import glob
 import PyPDF2
 import textract
+import ntpath
 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
-folder = '//daten.ht.tu-berlin.de/home/Protokolle'
+class pdfScraper(object):
 
-def extract_keywords(pdf_file):
+	def __init__(self):
+		self._splash()
+		self.folder = "//daten.ht.tu-berlin.de/home/Protokolle/"
 
-	text = ""
+	def _path_leaf(self, path):
+		head, tail = ntpath.split(path)
+		return tail or ntpath.basename(head)
 
-	byte = textract.process(pdf_file)
+	def _extract_keywords(self, file):
+		text = ""
+		byte = textract.process(file, encoding='utf8')
+		text += byte.decode("utf-8")
+		tokens = word_tokenize(text)
+		punctuations = ['(',')',';',':','[',']',',']
+		stop_words = stopwords.words('german')
+		keywords = [word for word in tokens if not word in stop_words and not word in punctuations]
+		keyword_set = set(keywords)
+		return list(keywords)
 
-	text += byte.decode("utf-8")
+	def scrape(self, keyword):
+		files = glob.glob(self.folder + "*.pdf")
+		pdf_list = []
+		for pdf in files:
+			keyword_list = self._extract_keywords(pdf)
+			if keyword in keyword_list:
+				pdf_list.append(self._path_leaf(pdf))
+		return self._print(pdf_list)
 
-	tokens = word_tokenize(text)
+	def _splash(self):
+		print("\n\n")
+		print("Welcome to pdfScraper\n".center(80))
+		print("Copyright © 2019 Christian Gentsch".center(80))
+		print("This work is free, You can redestribute it and/or modify it under the".center(80))
+		print("terms of the Do What The Fuck You Want To Public License, Version 2,".center(80))
+		print("as published by Sam Hocevar. See http://www.wtfpl.net/ for more details".center(80))
+		print("\n\n")
 
-	punctuations = ['(',')',';',':','[',']',',']
-
-	stop_words = stopwords.words('german')
-
-	keywords = [word for word in tokens if not word in stop_words and not word in punctuations]
-
-	keyword_set = set(keywords)
-
-	return list(keywords)
-
+	def _print(self, pdf_list):
+		print("\nYour keyword was found in the following documents")
+		print("-------------------------------------------------")
+		for pdf in pdf_list:
+			print(pdf)
+		print("\n")
 
 if __name__ == "__main__":
 
-	folder = input("Enter file folder:")
+	scraper = pdfScraper()
 
-	word = input("Enter search word:")
+	while True:
 
-	files = glob.glob(folder + "*.pdf")
+		keyword = input("Insert Keyword.\n", )
 
-	for pdf in files:
-
-		keyword_list = extract_keywords(pdf)
-
-		if word in keyword_list:
-
-			print("Found in " + pdf)
-
-
-
-
-
+		print(scraper.scrape(keyword))
